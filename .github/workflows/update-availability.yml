@@ -1,0 +1,32 @@
+name: Update Availability
+
+on:
+  schedule:
+    - cron: '0 7 * * *'   # Every day at 7am UTC
+  workflow_dispatch:        # Also allows manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run availability update
+        run: python update_availability.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "Availability Bot"
+          git config user.email "bot@mybabyultrasound.co.uk"
+          git add mybaby-chatbot.html
+          git diff --staged --quiet || git commit -m "Auto-update availability $(date +'%Y-%m-%d %H:%M')"
+          git push
