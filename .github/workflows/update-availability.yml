@@ -3,7 +3,7 @@ name: Update Availability
 on:
   schedule:
     - cron: '0 7 * * *'   # Every day at 7am UTC
-  workflow_dispatch:        # Also allows manual trigger from GitHub UI
+  workflow_dispatch:        # Manual trigger from GitHub UI
 
 jobs:
   update:
@@ -23,10 +23,17 @@ jobs:
       - name: Run availability update
         run: python update_availability.py
 
+      - name: Inject API key into widgets
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          sed -i "s|%%ANTHROPIC_API_KEY%%|${ANTHROPIC_API_KEY}|g" mybaby-chatbot.html
+          sed -i "s|%%ANTHROPIC_API_KEY%%|${ANTHROPIC_API_KEY}|g" mybaby-review-widget.html
+
       - name: Commit and push if changed
         run: |
           git config user.name  "Availability Bot"
           git config user.email "bot@mybabyultrasound.co.uk"
-          git add mybaby-chatbot.html
+          git add mybaby-chatbot.html mybaby-review-widget.html
           git diff --staged --quiet || git commit -m "Auto-update availability $(date +'%Y-%m-%d %H:%M')"
           git push
